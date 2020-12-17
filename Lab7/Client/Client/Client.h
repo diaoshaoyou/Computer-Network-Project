@@ -19,7 +19,8 @@ enum PacketRequest {//request packet type
 	NAME='1',
 	LIST='2',
 	TIME='3',
-	DATA='4'
+	DATA='4',
+	DISCONN='5'
 };
 
 void createClient();
@@ -28,6 +29,6 @@ DWORD WINAPI childThread(LPVOID lpParam);//must be global or static function
 void setUI();
 void Disconnect();
 void Connect();
-void Send();
+int Send();
 
 #endif // !CLIENT_H

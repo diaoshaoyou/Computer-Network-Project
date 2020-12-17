@@ -46,14 +46,14 @@ void createClient() {
 	}
 }
 DWORD WINAPI mainThread(LPVOID lpParam) {
-	setUI();
 	int choice = 0;
 	while (1) {
+		setUI();
 		scanf("%d", &choice);
 		switch (state) {
 		case State::DISCONN:
-			if (choice == 0) {//disconnect
-				Disconnect();
+			if (choice == 0) {//exit
+				exit(0);
 			}
 			else {//connect
 				Connect();
@@ -84,7 +84,7 @@ DWORD WINAPI mainThread(LPVOID lpParam) {
 			if (choice == 0) {//disconnect
 				Disconnect();
 			}
-			else {//send data
+			else if (choice == 1) {//send data
 				char* tmp = (char*)malloc(sizeof(char) * BUF_SIZE);
 				printf("Please input your sending user ID:\n");
 				scanf("%s", tmp);
@@ -104,12 +104,16 @@ DWORD WINAPI mainThread(LPVOID lpParam) {
 				sendData[0] = DATA;
 				Send();
 			}
+			else {//choice==2
+				state = State::CONN;
+				continue;
+			}
 			break;
 		default:
 			break;
 		}
 	}
-	if (state==State::CONN){
+	if (state!=State::DISCONN){
 		if (WaitForSingleObject(childReady, 10) == WAIT_OBJECT_0){//main thread waits 10ms for child thread to be ready
 		/*DWORD WaitForSingleObject( HANDLE hHandle, DWORD dwMilliseconds);*/
 			ResetEvent(childReady);//unsignal childReady
@@ -121,7 +125,7 @@ DWORD WINAPI mainThread(LPVOID lpParam) {
 void setUI() {
 	switch (state) {
 	case State::DISCONN:
-		printf("0. Disconnect\n1. Connect to Server\n");
+		printf("0. Exit\n1. Connect to Server\n");
 		printf("Please choose the order number: ");
 		break;
 	case State::CONN://0:exit, 1:get time, 2:get name, 3:get list
@@ -129,7 +133,7 @@ void setUI() {
 		printf("Please choose the order number: ");
 		break;
 	case State::SEND:
-		printf("0. Disconnect\n1. Send message\n");
+		printf("0. Disconnect\n1. Send message\n2. Back\n");
 		printf("Please choose the order number: ");
 		break;
 	default:
@@ -137,11 +141,16 @@ void setUI() {
 	}
 }
 void Disconnect() {
-	//close(socketID);
-
 	state = State::DISCONN;
+	sendData[0] = DISCONN;
+	if (Send() == -1) {
+		printf(DisconnError);
+	}
+	else {
+		printf(SUCCESS);
+	}
 }
-DWORD WINAPI childThread(LPVOID lpParam) {
+DWORD WINAPI childThread(LPVOID lpParam) {//thread for receiving data
 	while (1) {
 		if (recv(socketID, recvData, BUF_SIZE, 0) <= 0) {//?
 			printf(RecvError);
@@ -167,10 +176,14 @@ void Connect() {//connect to server: create socket+connect+create child thread
 		printf(CreateError);
 		return;
 	}
-	
-	if (connect(socketID, (const struct sockaddr*)&serverAddr, sizeof(sockaddr))<0) {
+	int tmp = connect(socketID, (const struct sockaddr*)&serverAddr, sizeof(sockaddr));
 	/*int connect(SOCKET s, const struct sockaddr * name, int namelen);*/
+	if (tmp<0) {
 		printf(ConnError);
+		return;
+	}
+	else if (tmp == ETIMEDOUT) {
+		printf(TimeoutError);
 		return;
 	}
 	mainReady = CreateEvent(NULL, false, true, NULL);
@@ -189,9 +202,10 @@ void Connect() {//connect to server: create socket+connect+create child thread
 	if (childThr == NULL || thrID == 0)
 		printf(CreateError);
 	childReady = CreateEvent(NULL, false, true, NULL);
+	printf(SUCCESS);
 }
 
-void Send() {//send request
+int Send() {//send request
 	if (sendData[0] != DATA) {
 		for (int i = 1; i < BUF_SIZE; i++) {
 			sendData[i] = '0';
@@ -200,5 +214,9 @@ void Send() {//send request
 	if (send(socketID, (const char*)sendData, strlen(sendData), 0)<0) {
 		/*ssize_t send(int sockfd, const void *buf, size_t len, int flags);*/
 		printf(SendError);
+		return -1;
+	}
+	else {
+		printf(SUCCESS);
 	}
 }
