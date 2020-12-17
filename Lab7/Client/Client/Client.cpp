@@ -9,7 +9,7 @@ int socketID;
 char sendData[BUF_SIZE];
 char recvData[BUF_SIZE];
 
-Client::Client() {
+void createClient() {
 	//init:
 	state = State::DISCONN;
 	memset(sendData, 0, sizeof(sendData));
@@ -45,7 +45,7 @@ Client::Client() {
 		printf(CreateError);
 	}
 }
-DWORD WINAPI Client::mainThread(LPVOID lpParam) {
+DWORD WINAPI mainThread(LPVOID lpParam) {
 	setUI();
 	int choice = 0;
 	while (1) {
@@ -66,14 +66,14 @@ DWORD WINAPI Client::mainThread(LPVOID lpParam) {
 				break;
 			case 1://send get time request
 				sendData[0] = TIME;
-				setRequest();
+				Send();
 				break;
 			case 2://send get name request
 				sendData[0] = NAME;
-				setRequest();
+				Send();
 			case 3://send get list request
 				sendData[0] = LIST;
-				setRequest();
+				Send();
 				state = State::SEND;
 				break;
 			default:
@@ -86,7 +86,6 @@ DWORD WINAPI Client::mainThread(LPVOID lpParam) {
 			}
 			else {//send data
 				char* tmp = (char*)malloc(sizeof(char) * BUF_SIZE);
-				setRequest();
 				printf("Please input your sending user ID:\n");
 				scanf("%s", tmp);
 				while (strlen(tmp) > MAX_CLIENT) {//user ID is wrong
@@ -101,7 +100,9 @@ DWORD WINAPI Client::mainThread(LPVOID lpParam) {
 					scanf("%s", tmp);
 				}
 				strcpy(sendData + MAX_CLIENT + 1, tmp);
+				strcat(sendData + MAX_CLIENT + 1, "\0");
 				sendData[0] = DATA;
+				Send();
 			}
 			break;
 		default:
@@ -116,18 +117,8 @@ DWORD WINAPI Client::mainThread(LPVOID lpParam) {
 		}
 	}
 }
-DWORD WINAPI Client::childThread(LPVOID lpParam) {
-	while (1) {
-		if (recv(socketID, recvData, BUF_SIZE, 0) < 0) {//?
-			printf(RecvError);
-		}
-		else {
-			printf("%s\n", recvData);
-		}
-	}
-	return ;
-}
-void Client::setUI() {
+
+void setUI() {
 	switch (state) {
 	case State::DISCONN:
 		printf("0. Disconnect\n1. Connect to Server\n");
@@ -145,12 +136,26 @@ void Client::setUI() {
 		break;
 	}
 }
-void Client::Disconnect() {
+void Disconnect() {
 	//close(socketID);
 
 	state = State::DISCONN;
 }
-void Client::Connect() {//connect to server: create socket+connect+create child thread
+DWORD WINAPI childThread(LPVOID lpParam) {
+	while (1) {
+		if (recv(socketID, recvData, BUF_SIZE, 0) <= 0) {//?
+			printf(RecvError);
+			break;
+		}
+		else {
+			printf("%s\n", recvData);
+			SetEvent(childReady);//make child thread ready
+		}
+	}
+	closesocket(socketID);
+	return 0;
+}
+void Connect() {//connect to server: create socket+connect+create child thread
 	struct sockaddr_in serverAddr;
 	//serverAddr = (struct sockaddr_in*)malloc(sizeof(sockaddr_in));
 	serverAddr.sin_port = htons(PORT);
@@ -186,10 +191,11 @@ void Client::Connect() {//connect to server: create socket+connect+create child 
 	childReady = CreateEvent(NULL, false, true, NULL);
 }
 
-void Client::setRequest() {
-	//send request
-	for (int i = 1; i < BUF_SIZE; i++) {
-		sendData[i] = '0';
+void Send() {//send request
+	if (sendData[0] != DATA) {
+		for (int i = 1; i < BUF_SIZE; i++) {
+			sendData[i] = '0';
+		}
 	}
 	if (send(socketID, (const char*)sendData, strlen(sendData), 0)<0) {
 		/*ssize_t send(int sockfd, const void *buf, size_t len, int flags);*/

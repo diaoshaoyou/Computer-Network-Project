@@ -1,8 +1,4 @@
 ﻿  Client.cpp
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(128,9): error C2561: “Client::childThread”: 函数必须返回值
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(119): message : 参见“Client::childThread”的声明
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(160,19): warning C4244: “=”: 从“SOCKET”转换到“int”，可能丢失数据
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(194,5): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  main.cpp
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\main.cpp(12,9): warning C4930: “Client client(void)”: 未调用原型函数(是否是有意用变量定义的?)
-  正在生成代码...
+D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(165,19): warning C4244: “=”: 从“SOCKET”转换到“int”，可能丢失数据
+D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(200,5): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  Client.vcxproj -> D:\00a\network\Computer-Network-Project\Lab7\Client\x64\Debug\Client.exe

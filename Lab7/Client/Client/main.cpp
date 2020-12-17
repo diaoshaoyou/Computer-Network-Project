@@ -8,11 +8,15 @@
  *packet type: NAME='1' LIST='2' TIME='3' DATA='4'
  *sending object: server='0' other users>'0'
 */
+extern HANDLE mainReady;
 int main() {
-	Client client();
-	/*char* tmp = (char*)malloc(sizeof(char) * 244);
-	scanf("%s", tmp);
-	printf("%d", strlen(tmp));*/
+	createClient();
+	while (1) {
+		if (WaitForSingleObject(mainReady, 10) == WAIT_OBJECT_0) {
+			ResetEvent(mainReady);
+			Sleep(1);
+		}
+	}
 	return 0;
 }
 

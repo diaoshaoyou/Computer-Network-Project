@@ -22,14 +22,12 @@ enum PacketRequest {//request packet type
 	DATA='4'
 };
 
-class Client {
-public:
-	Client();
-	static DWORD WINAPI mainThread(LPVOID lpParam);//must be global or static function
-	static DWORD WINAPI childThread(LPVOID lpParam);//must be global or static function
-	static void setUI();
-	static void Disconnect();
-	static void Connect();
-	static void setRequest();
-};
+void createClient();
+DWORD WINAPI mainThread(LPVOID lpParam);//must be global or static function
+DWORD WINAPI childThread(LPVOID lpParam);//must be global or static function
+void setUI();
+void Disconnect();
+void Connect();
+void Send();
+
 #endif // !CLIENT_H
