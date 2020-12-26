@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="Error.h" />
+    <ClInclude Include="global.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

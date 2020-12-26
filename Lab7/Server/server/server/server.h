@@ -7,6 +7,7 @@
 #include <string>
 #include <time.h>
 #include <Windows.h>
+#include "global.h"
 
 //加入动态连接库
 #pragma comment(lib, "ws2_32.lib")
@@ -14,19 +15,18 @@
 //宏
 #define _HEADER_LEN 2
 #define _MAX_DATA_LEN 128
-#define _DEFAULT_PORT 3574 //按要求使用学号
 #define _MAX_Q_SIZE 500
 
 //定义结构
-typedef enum {//this is the package that the server might receive
-	NAME,
-	LIST,
-	TIME,
-	DATA,
-	DISCONN,
-	CONN, //TO ZHOU：我觉得应该在这里加上几个控制信号，client要告诉服务器需要连接和退出
-	EXIT 
-}ReqOp;
+//typedef enum {//this is the package that the server might receive
+//	NAME,
+//	LIST,
+//	TIME,
+//	DATA,
+//	DISCONN,
+//	CONN, //TO ZHOU：我觉得应该在这里加上几个控制信号，client要告诉服务器需要连接和退出
+//	EXIT 
+//}ReqOp;
 typedef struct client_Request { //a request sended by client
 	SOCKADDR_IN soc_address;
 	SOCKET curr_socket;

@@ -167,7 +167,7 @@ DWORD WINAPI childThread(LPVOID lpParam) {//thread for receiving data
 void Connect() {//connect to server: create socket+connect+create child thread
 	struct sockaddr_in serverAddr;
 	//serverAddr = (struct sockaddr_in*)malloc(sizeof(sockaddr_in));
-	serverAddr.sin_port = htons(PORT);
+	serverAddr.sin_port = htons(_DEFAULT_PORT);
 	serverAddr.sin_addr.s_addr = inet_addr(IP);
 	serverAddr.sin_family = AF_INET;
 
