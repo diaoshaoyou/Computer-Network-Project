@@ -11,8 +11,6 @@
 #include "global.h"
 #pragma comment(lib,"ws2_32.lib")
 
-//The header,s length
-#define HEADERLENTH 2
 //The max number of clients
 #define MAXQUEUE 100
 

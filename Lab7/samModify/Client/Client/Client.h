@@ -9,7 +9,7 @@
 #include "global.h"
 #pragma comment(lib,"ws2_32.lib")
 
-
+bool recvJustNow = true;
 //The event of the main thread
 HANDLE InputEvent = NULL;
 //The event of the child thread
@@ -40,7 +40,7 @@ void _connect();
 void exit();
 //Break connection between the client and the server
 void disconnect();
-void sendRequest(bool isMsg);
+void sendRequest();
 //Send request to server for current time
 /*void send_time_request();
 //Send request to server for server's name

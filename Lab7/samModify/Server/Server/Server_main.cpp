@@ -66,10 +66,10 @@ void CreateMainThr(void) {
 				ClientList[i].SocAddress = addr;
 				ClientList[i].ChildThread = createChildThr(&CurrentChild);
 
-				printf("Client %d log in.\n", i);
-				printf("Client %d's ip address is %s.\n", i, inet_ntop(AF_INET, (void*)&addr.sin_addr, Buffer, 16));
-				printf("Client %d's port is %d.\n", i, htons(addr.sin_port));
-				printf("Client %d's socket is  %d\n", i, ClientSocket);
+				printf("#Client %d log in.\n", i);
+				printf("#Client %d's ip address is %s.\n", i, inet_ntop(AF_INET, (void*)&addr.sin_addr, Buffer, 16));
+				printf("#Client %d's port is %d.\n", i, htons(addr.sin_port));
+				printf("#Client %d's socket is  %d\n", i, ClientSocket);
 				break;
 			}
 
@@ -82,7 +82,7 @@ void CreateMainThr(void) {
 		}
 	}
 	closesocket(ServerSocket);
-	printf("main_thread_func,break\n");
+	//printf("main_thread_func,break\n");
 	WSACleanup();
 
 }
@@ -138,17 +138,25 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 			break;
 		}
 		Op = RequestBuffer[0];
-		if (Op == DISCONN)
+		/*if (Op == DISCONN)
 		{
 			ClientList[ChildIndex].DirtyBit = 0;
 			printf("Client %d log out!\n", ChildIndex);
 			closesocket(CurrentSocket);
 			break;
-
-		}
+		}*/
 		//Response different message to the client
 		switch (Op)
 		{
+		case DISCONN:
+			ClientList[ChildIndex].DirtyBit = 0;
+			printf("#Client %d log out!\n", ChildIndex);
+			ResponseBuffer[0] = DISCONN;
+			ResponseBuffer[1] = 1;
+			strcat(ResponseBuffer + HEADERLENGTH, "Goodbye!\n\0");//send goodbye
+			send(CurrentSocket, ResponseBuffer, sizeof(ResponseBuffer), 0);
+			closesocket(CurrentSocket);
+			return 0;
 		case TIME:
 			pack_time(ResponseBuffer);
 			break;
@@ -159,13 +167,12 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 			pack_list(ResponseBuffer);
 			break;
 		case SENDMSG:
-			printf("send   ******!\n");
 			send_message(RequestBuffer, ResponseBuffer);
 			break;
 		default:
 			break;
 		}
-		printf("Response to client %d: %s\n", ChildIndex, ResponseBuffer + 2);
+		printf("#Response to client %d: %s\n", ChildIndex, ResponseBuffer + HEADERLENGTH);
 		ret = send(CurrentSocket, ResponseBuffer, sizeof(ResponseBuffer), 0);
 	}
 	return 0;
@@ -182,24 +189,24 @@ void pack_time(char* buffer) {
 	buffer[0] = TIME;
 	buffer[1] = 1;
 	sprintf(temp, "%d", lt->tm_year + 1900);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, "/");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, "/");
 	sprintf(temp, "%d", lt->tm_mon + 1);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, "/");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, "/");
 	sprintf(temp, "%d", lt->tm_mday);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, " ");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, " ");
 
 	sprintf(temp, "%d", lt->tm_hour);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, ":");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, ":");
 	sprintf(temp, "%d", lt->tm_min);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, ":");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, ":");
 	sprintf(temp, "%d", lt->tm_sec);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, "\0");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, "\0");
 
 }
 //Get and reply server's name
@@ -210,8 +217,8 @@ void pack_name(char* buffer) {
 	buffer[0] = NAME;
 	buffer[1] = 1;
 	gethostname(temp, 255);
-	strcat(buffer + HEADERLENTH, temp);
-	strcat(buffer + HEADERLENTH, "\0");
+	strcat(buffer + HEADERLENGTH, temp);
+	strcat(buffer + HEADERLENGTH, "\0");
 }
 //Get and reply clients' list
 void pack_list(char* buffer) {
@@ -226,16 +233,16 @@ void pack_list(char* buffer) {
 	{
 		if (ClientList[i].DirtyBit == 1)
 		{
-			printf("Find Client %d\n", i);
-			strcat(buffer + HEADERLENTH, "Index: ");
+			printf("#Find Client %d\n", i);
+			strcat(buffer + HEADERLENGTH, "Index: ");
 			sprintf(temp, "%d ", i);
-			strcat(buffer + HEADERLENTH, temp);
-			strcat(buffer + HEADERLENTH, "IP : ");
-			strcat(buffer + HEADERLENTH, inet_ntop(AF_INET, (void*)&ClientList[i].SocAddress.sin_addr, Buffer, 16));
-			strcat(buffer + HEADERLENTH, " port : ");
+			strcat(buffer + HEADERLENGTH, temp);
+			strcat(buffer + HEADERLENGTH, "IP : ");
+			strcat(buffer + HEADERLENGTH, inet_ntop(AF_INET, (void*)&ClientList[i].SocAddress.sin_addr, Buffer, 16));
+			strcat(buffer + HEADERLENGTH, " port : ");
 			sprintf(temp, "%d", htons(ClientList[i].SocAddress.sin_port));
-			strcat(buffer + HEADERLENTH, temp);
-			strcat(buffer + HEADERLENTH, "\n");
+			strcat(buffer + HEADERLENGTH, temp);
+			strcat(buffer + HEADERLENGTH, "\n");
 		}
 	}
 
@@ -248,18 +255,18 @@ void send_message(char* request, char* reply) {
 	//Find if the client is connected or not.
 	if (ClientList[SrcIndex].DirtyBit)
 	{
-		printf("Request: %s\n", request + 2);
+		printf("#Request: %s\n", request + HEADERLENGTH);
 		ret = send(ClientList[SrcIndex].CurrentSocket, request, strlen(request), 0);
 		if (ret <= 0)
 		{
-			printf("send() to target failure!\n");
-			strcat(reply, "send() to target failure!\n");
+			printf(S_ContactErr);
+			strcat(reply, C_ContactErr);
 		}
 		else
 		{
 			reply[0] = SENDMSG;
 			reply[1] = 1;
-			strcat(reply + 2, "Send to target client successfully!\n");
+			strcat(reply + HEADERLENGTH, SendSuccess);
 		}
 
 	}
@@ -267,7 +274,7 @@ void send_message(char* request, char* reply) {
 	{
 		reply[0] = SENDMSG;
 		reply[1] = 1;
-		strcat(reply + 2, "No target client!\n");
+		strcat(reply + HEADERLENGTH, NoTargetErr);
 	}
 
 }
@@ -302,7 +309,7 @@ void BindSocket(void) {
 void Listen(void) {
 
 	if (listen(ServerSocket, MAXQUEUE) == SOCKET_ERROR) {
-		printf("Listen failed with error: %ld\n", WSAGetLastError());
+		printf(ListenErr, WSAGetLastError());
 		closesocket(ServerSocket);
 		WSACleanup();
 		return;

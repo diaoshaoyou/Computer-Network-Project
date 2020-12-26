@@ -1,6 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "client.h"
+/*
+*Only support sending data once!! When sending data the second time, please input "6" again.
+*/
 int main(void) {
 	//Initialize socket
 	InitSocket();
@@ -58,7 +61,10 @@ DWORD WINAPI mainThrFun(LPVOID lp) {
 	int index = 1;
 	while (1)
 	{
-		printf(C_InputTip);
+		if (recvJustNow) {
+			printf(C_InputTip);
+			recvJustNow = false;
+		}
 		//Input the instruction
 		scanf("%d", &Op);
 		switch (Op)
@@ -76,28 +82,28 @@ DWORD WINAPI mainThrFun(LPVOID lp) {
 			//send_time_request();
 			memset(RequestBuf, 0, sizeof(RequestBuf));
 			RequestBuf[0] = TIME;
-			sendRequest(false);
+			sendRequest();
 			break;
 		case NAME:
 			memset(RequestBuf, 0, sizeof(RequestBuf));
 			RequestBuf[0] = NAME;
-			sendRequest(false);
+			sendRequest();
 			break;
 		case LIST:
 			memset(RequestBuf, 0, sizeof(RequestBuf));
 			RequestBuf[0] = LIST;
-			sendRequest(false);
+			sendRequest();
 			break;
 		case SENDMSG:
 			memset(RequestBuf, 0, sizeof(RequestBuf));
 			printf(InputIndex);//Input the client's index you want to send
 			scanf("%d", &index);
 			printf(InputMsg);//Input the client's message you want to send
-			scanf("%s", RequestBuf + 2);
-			strcat(RequestBuf + 2, "\0");
+			scanf("%s", RequestBuf + HEADERLENGTH);
+			strcat(RequestBuf + HEADERLENGTH, "\0");
 			RequestBuf[0] = SENDMSG;
 			RequestBuf[1] = index;
-			sendRequest(true);
+			sendRequest();
 			break;
 		default:
 			break;
@@ -123,11 +129,12 @@ void _connect(void) {
 	//If the connection is established,return
 	if (ConnectStatus)
 	{
-		printf("You have already connect to a server,please disconnect before connecting to a new server!\n");
+		printf(AlreadyConn);
+		recvJustNow = true;
 		return;
 	}
 	//Input the server's IP address
-	printf("Please type in your target server's IP:\n");
+	printf(InputIP);
 	scanf("%s", ServerIP);
 	/*printf("Please type in your target server's Port:");
 	scanf("%d", &ServerPort);
@@ -153,7 +160,7 @@ void _connect(void) {
 		printf(CreateSockErr);
 		return;
 	}
-	printf("Socket: %lu, Port: %d, IP: %s\n", ClientSocket, ServerPort, ServerIP);
+	printf("$Socket: %lu, Port: %d, IP: %s\n", ClientSocket, ServerPort, ServerIP);
 
 	//Create InputEvent's event
 	InputEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -198,22 +205,19 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 	while (true)
 	{
 		memset(ReceiveBuf, 0, sizeof(ReceiveBuf));
-		ret = recv(ClientSocket, ReceiveBuf, sizeof(ReceiveBuf), 0);
-
-
-		if (ret <= 0)
+		if (recv(ClientSocket, ReceiveBuf, sizeof(ReceiveBuf), 0) <= 0)
 		{
 			printf(RecvErr);
 			break;
 		}
-
-		printf("%s", ReceiveBuf + 2);
+		printf("$Received-->%s", ReceiveBuf + HEADERLENGTH);
 		printf("\n");
-
+		recvJustNow = true;//print input tips after reciving
 		SetEvent(ReceiveEvent);
+		if (ConnectStatus == false) {
+			break;
+		}
 	}
-
-	printf("ChildThread ID:%d stop!\n", GetCurrentThreadId());
 	closesocket(ClientSocket);
 	return 1;
 }
@@ -229,15 +233,16 @@ void exit(void) {
 void disconnect() {
 	memset(RequestBuf, 0, sizeof(RequestBuf));
 	RequestBuf[0] = DISCONN;
-	sendRequest(false);
-	ConnectStatus = false;
+	sendRequest();
 }
 
-void sendRequest(bool isMsg) {
+void sendRequest() {
 	if (ConnectStatus == false)
 		printf(ConnFirstErr);
 	else {
-		if (isMsg == false) {
+		if(RequestBuf[0]==DISCONN)
+			ConnectStatus = false;
+		if (RequestBuf[0] != SENDMSG) {
 			RequestBuf[1] = 1;
 			RequestBuf[2] = 0;
 		}
