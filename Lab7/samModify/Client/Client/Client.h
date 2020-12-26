@@ -23,8 +23,7 @@ char ReceiveBuf[512] = { 0 };
 //The buffer to be sented to the server
 char RequestBuf[512] = { 0 };
 //The IP address of server
-char ServerIP[100] = { 0 };
-
+//char ServerIP[100] = { 0 };
 
 //Initialize the socket
 void InitSocket(void);
@@ -36,7 +35,7 @@ DWORD WINAPI mainThrFun(LPVOID lp);
 DWORD WINAPI childThrFun(LPVOID lp);
 
 //Establish connection between the client and the server
-void connect_to_server();
+void _connect();
 //Exit the program
 void exit();
 //Break connection between the client and the server

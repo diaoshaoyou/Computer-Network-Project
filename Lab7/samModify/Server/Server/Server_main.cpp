@@ -1,12 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "server.h"
+#include "Server.h"
 int main(void) {
 	//Initialize socket
 	InitSocket();
 	//bind
 	BindSocket();
-	//listen on port 4345
-	Listen();
+	
+	Listen();//listen on port 
 	//create the main thread
 	CreateMainThr();
 	return 0;
@@ -19,7 +19,7 @@ void InitSocket(void) {
 
 	if (WSAStartup(wVersionRequested, &wsaData) != 0)
 	{
-		printf("WSAStartup() failed!\n");
+		printf(WSASErr);
 		return;
 	}
 
@@ -27,7 +27,7 @@ void InitSocket(void) {
 	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
 	{
 		WSACleanup();
-		printf("Invalid Winsock version!\n");
+		printf(VersionErr);
 		return;
 	}
 
@@ -35,24 +35,21 @@ void InitSocket(void) {
 	for (int i = 0; i < MAXQUEUE; i++) {
 		ClientList[i].DirtyBit = 0;
 	}
-	printf("Initializing success!\n");
+	//printf("Initializing success!\n");
 }
 
 void CreateMainThr(void) {
-	printf("Main thread ID:%4d created!\n", GetCurrentThreadId());
-	printf("*****************************************\n");
-	printf("        Welcome To Socket Server!       \n");
-	printf("*****************************************\n");
+	printf(CreateMain, GetCurrentThreadId());
 	int i = 0;
 	ChildClient CurrentChild;
 	while (true)
 	{
-		printf("Listening on port 4345...");
+		printf(ServListen);
 		//Accept the request from the client
 		ClientSocket = accept(ServerSocket, (SOCKADDR*)(&addr), &addrlen);
 		if (ClientSocket == INVALID_SOCKET)
 		{
-			printf("accept error!");
+			printf(AcceptErr);
 			break;
 		}
 		i = 0;
@@ -80,10 +77,9 @@ void CreateMainThr(void) {
 		//If the clients' number reach to MAXQUEUE,allocating failed
 		if (i == MAXQUEUE)
 		{
-			printf("Exceeding the max amount of queue...");
+			printf(RangeErr);
 			closesocket(ClientSocket);
 		}
-
 	}
 	closesocket(ServerSocket);
 	printf("main_thread_func,break\n");
@@ -98,13 +94,13 @@ HANDLE createChildThr(ChildClient* ChildPtr) {
 	ChildThread = CreateThread(NULL, 0, childThrFun, (LPVOID)ChildPtr, 0, &ThreadId);
 	if (ChildThread == NULL || ThreadId == 0)
 	{
-		printf("Creat Child Thread failed.\n");
+		printf(ChildThrErr);
 	}
 	return  ChildThread;
 }
 //The function to be called by the child thread
 DWORD WINAPI childThrFun(LPVOID lp) {
-	printf("Child thread ID:%4d create!\n", GetCurrentThreadId());
+	printf(CreateChild, GetCurrentThreadId());
 	char RequestBuffer[MAXDATALENTH];
 	char ResponseBuffer[MAXDATALENTH];
 	char IndexTemp[10];
@@ -127,7 +123,7 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 	ret = send(CurrentSocket, ResponseBuffer, sizeof(ResponseBuffer), 0);
 	if (ret <= 0)
 	{
-		printf("recv failed!\n");
+		printf(RecvErr);
 	}
 	while (1)
 	{
@@ -138,11 +134,11 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 
 		if (ret <= 0)
 		{
-			printf("recv failed!\n");
+			printf(RecvErr);
 			break;
 		}
 		Op = RequestBuffer[0];
-		if (Op == DISCONNECT)
+		if (Op == DISCONN)
 		{
 			ClientList[ChildIndex].DirtyBit = 0;
 			printf("Client %d log out!\n", ChildIndex);
@@ -153,16 +149,16 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 		//Response different message to the client
 		switch (Op)
 		{
-		case GETTIME:
+		case TIME:
 			pack_time(ResponseBuffer);
 			break;
-		case GETNAME:
+		case NAME:
 			pack_name(ResponseBuffer);
 			break;
-		case GETLIST:
+		case LIST:
 			pack_list(ResponseBuffer);
 			break;
-		case SENDMESSAGE:
+		case SENDMSG:
 			printf("send   ******!\n");
 			send_message(RequestBuffer, ResponseBuffer);
 			break;
@@ -183,7 +179,7 @@ void pack_time(char* buffer) {
 	char temp[MAXDATALENTH] = { 0 };
 	memset(temp, 0, sizeof(temp));
 
-	buffer[0] = GETTIME;
+	buffer[0] = TIME;
 	buffer[1] = 1;
 	sprintf(temp, "%d", lt->tm_year + 1900);
 	strcat(buffer + HEADERLENTH, temp);
@@ -211,7 +207,7 @@ void pack_name(char* buffer) {
 	char temp[MAXDATALENTH] = { 0 };
 	memset(temp, 0, sizeof(temp));
 
-	buffer[0] = GETNAME;
+	buffer[0] = NAME;
 	buffer[1] = 1;
 	gethostname(temp, 255);
 	strcat(buffer + HEADERLENTH, temp);
@@ -224,7 +220,7 @@ void pack_list(char* buffer) {
 	int i = 0;
 	memset(temp, 0, sizeof(temp));
 
-	buffer[0] = GETLIST;
+	buffer[0] = LIST;
 	buffer[1] = 1;
 	while (++i < MAXQUEUE)
 	{
@@ -261,7 +257,7 @@ void send_message(char* request, char* reply) {
 		}
 		else
 		{
-			reply[0] = SENDMESSAGE;
+			reply[0] = SENDMSG;
 			reply[1] = 1;
 			strcat(reply + 2, "Send to target client successfully!\n");
 		}
@@ -269,7 +265,7 @@ void send_message(char* request, char* reply) {
 	}
 	else
 	{
-		reply[0] = SENDMESSAGE;
+		reply[0] = SENDMSG;
 		reply[1] = 1;
 		strcat(reply + 2, "No target client!\n");
 	}
@@ -283,24 +279,24 @@ void BindSocket(void) {
 	if (ServerSocket == INVALID_SOCKET)
 	{
 		WSACleanup();
-		printf("socket() failed!\n");
+		printf(CreateSockErr);
 		return; //TODO
 	}
 
 	int len = sizeof(SOCKADDR);
 	SOCKADDR_IN Server;
 	Server.sin_family = AF_INET;
-	Server.sin_port = htons(DAFAULTPORT);
+	Server.sin_port = htons(DAFAULT_PORT);
 	Server.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
 	if (bind(ServerSocket, (SOCKADDR*)&Server, len) == INVALID_SOCKET)
 	{
-		printf("Server bind failed!\n");
+		printf(BindErr);
 		closesocket(ServerSocket);
 		WSACleanup();
 		return;
 	}
-	printf("Binding success!\n");
+	//printf("Binding success!\n");
 }
 //Listening on port 4345
 void Listen(void) {
@@ -311,5 +307,5 @@ void Listen(void) {
 		WSACleanup();
 		return;
 	}
-	printf("Listening success!\n");
+	//printf("Listening success!\n");
 }

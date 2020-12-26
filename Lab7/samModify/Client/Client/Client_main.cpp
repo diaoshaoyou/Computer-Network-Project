@@ -34,7 +34,7 @@ void InitSocket(void) {
 
 	if (WSAStartup(wVersionRequested, &wsaData) != 0)
 	{
-		printf("WSAStartup() failed!\n");
+		printf(WSASErr);
 		return;
 	}
 
@@ -42,7 +42,7 @@ void InitSocket(void) {
 	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
 	{
 		WSACleanup();
-		printf("Invalid Winsock version!\n");
+		printf(VersionErr);
 		return;
 	}
 
@@ -52,50 +52,39 @@ void InitSocket(void) {
 DWORD WINAPI mainThrFun(LPVOID lp) {
 	//Display the start menu
 	int Op = -1;
-	printf("Main thread ID:%4d created!\n", GetCurrentThreadId());
+	printf(CreateMain, GetCurrentThreadId());
 
-	printf("        Welcome To Socket Client!       \n");
-	printf("**************Start Menu*************** *\n");
-	printf("* 0.  Connect To Server                 *\n");
-	printf("* 1.  Exit                              *\n");
-	printf("* 2.  Disconnect from Server            *\n");
-	printf("* 3.  Get current time                  *\n");
-	printf("* 4.  Get server's name                 *\n");
-	printf("* 5.  Get clients' list                 *\n");
-	printf("* 6.  Send message to another clients   *\n");
-	printf("*****************************************\n");
+	printf(C_preface);
 
 	while (1)
 	{
-		printf("Please input the operation's index:     \n");
-		printf("client@:");
+		printf(C_InputTip);
 		//Input the instruction
 		scanf("%d", &Op);
 		switch (Op)
 		{
-		case CONNECT:
-			connect_to_server();
+		case CONN:
+			_connect();
 			break;
 		case EXIT:
 			exit();
 			break;
-		case DISCONNECT:
+		case DISCONN:
 			disconnect();
 			break;
-		case GETTIME:
+		case TIME:
 			send_time_request();
 			break;
-		case GETNAME:
+		case NAME:
 			send_name_request();
 			break;
-		case GETLIST:
+		case LIST:
 			send_list_request();
 			break;
-		case SENDMESSAGE:
+		case SENDMSG:
 			send_message_request();
 			break;
 		default:
-			//printf("Invalid input!\n");
 			break;
 		}
 
@@ -115,7 +104,7 @@ DWORD WINAPI mainThrFun(LPVOID lp) {
 }
 
 //The opertion to connect the client and the server
-void connect_to_server(void) {
+void _connect(void) {
 
 	//If the connection is established,return
 	if (ConnectStatus)
@@ -124,33 +113,33 @@ void connect_to_server(void) {
 		return;
 	}
 	//Input the server's IP address and port
-	printf("Please type in your target server's IP:\n");
-	scanf("%s", ServerIP);
-	printf("Please type in your target server's Port:");
-	scanf("%d", &ServerPort);
-	//Select the valid port
-	while (ServerPort <= 1024 && ServerPort <= 65535)
-	{
-		printf("Invalid port number,please select a port range from 1025 to 65534!\n");
-		printf("Please type in your target server's Port:  ");
-		scanf("%d", &ServerPort);
-	}
+	//printf("Please type in your target server's IP:\n");
+	//scanf("%s", ServerIP);
+	//printf("Please type in your target server's Port:");
+	//scanf("%d", &ServerPort);
+	////Select the valid port
+	//while (ServerPort <= 1024 && ServerPort <= 65535)
+	//{
+	//	printf("Invalid port number,please select a port range from 1025 to 65534!\n");
+	//	printf("Please type in your target server's Port:  ");
+	//	scanf("%d", &ServerPort);
+	//}
 
 	//Initialize the server
 	SOCKADDR_IN Server;
 	Server.sin_family = AF_INET;
 	Server.sin_port = htons(ServerPort);
-	Server.sin_addr.s_addr = inet_addr(ServerIP);
+	Server.sin_addr.s_addr = inet_addr(DEFAULT_IP);
 
 	//Get the socket
 	ClientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (ClientSocket == INVALID_SOCKET)
 	{
 		WSACleanup();
-		printf("Client socket() failed!\n");
+		printf(CreateSockErr);
 		return;
 	}
-	printf("SOCKET: %lu\n", ClientSocket);
+	printf("Socket: %lu, Port: %d, IP: %s\n", ClientSocket, ServerPort, DEFAULT_IP);
 
 	//Create InputEvent's event
 	InputEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -158,7 +147,7 @@ void connect_to_server(void) {
 	int ret = connect(ClientSocket, (PSOCKADDR)&Server, sizeof(Server));
 	if (ret == SOCKET_ERROR)
 	{
-		printf("connect() failed!\n");
+		printf(ConnErr);
 		closesocket(ClientSocket);
 		WSACleanup();
 		return;
@@ -182,13 +171,13 @@ void create_child_thread(void) {
 	ChildThread = CreateThread(NULL, 0, childThrFun, NULL, 0, &ThreadId);
 	if (ChildThread == NULL || ThreadId == 0)
 	{
-		printf("Creat Child Thread failed.\n");
+		printf(ChildThrErr);
 	}
 }
 
 //The function to be called by child thread
 DWORD WINAPI childThrFun(LPVOID lp) {
-	printf("SubThread_Receiving ID:%4d created!\n", GetCurrentThreadId());
+	printf(CreateChild, GetCurrentThreadId());
 	int ret = 0;
 
 	//Receive the response from the server
@@ -200,7 +189,7 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 
 		if (ret <= 0)
 		{
-			printf("recv failed!\n");
+			printf(RecvErr);
 			break;
 		}
 
@@ -210,7 +199,7 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 		SetEvent(ReceiveEvent);
 	}
 
-	printf("SubThread ID:%d stop!\n", GetCurrentThreadId());
+	printf("ChildThread ID:%d stop!\n", GetCurrentThreadId());
 	closesocket(ClientSocket);
 	return 1;
 }
@@ -237,7 +226,7 @@ void disconnect(void) {
 		//Send a request to the server the clinet will disconnect
 		ConnectStatus = 0;
 		memset(RequestBuf, 0, sizeof(RequestBuf));
-		RequestBuf[0] = DISCONNECT;
+		RequestBuf[0] = DISCONN;
 		RequestBuf[1] = 1;
 		RequestBuf[2] = 0;
 		int ret = send(ClientSocket, RequestBuf, strlen(RequestBuf), 0);
@@ -264,7 +253,7 @@ void send_time_request(void) {
 		for (int j = 0; j < 100; j++)
 		{
 			memset(RequestBuf, 0, sizeof(RequestBuf));
-			RequestBuf[0] = GETTIME;
+			RequestBuf[0] = TIME;
 			RequestBuf[1] = 1;
 			RequestBuf[2] = 0;
 
@@ -290,7 +279,7 @@ void send_name_request(void) {
 	{
 		//Ask for the server's name
 		memset(RequestBuf, 0, sizeof(RequestBuf));
-		RequestBuf[0] = GETNAME;
+		RequestBuf[0] = NAME;
 		RequestBuf[1] = 1;
 		RequestBuf[2] = 0;
 
@@ -315,7 +304,7 @@ void send_list_request(void) {
 	{
 		//Ask for the clients' list
 		memset(RequestBuf, 0, sizeof(RequestBuf));
-		RequestBuf[0] = GETLIST;
+		RequestBuf[0] = LIST;
 		RequestBuf[1] = 1;
 		RequestBuf[2] = 0;
 		printf("\nSendList\n!");
@@ -347,7 +336,7 @@ void send_message_request(void) {
 		scanf("%s", RequestBuf + 2);
 		strcat(RequestBuf + 2, "\0");
 
-		RequestBuf[0] = SENDMESSAGE;
+		RequestBuf[0] = SENDMSG;
 		RequestBuf[1] = index;
 		int ret = send(ClientSocket, RequestBuf, strlen(RequestBuf), 0);
 		if (ret == SOCKET_ERROR)

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MY_PACKET_H
-#define MY_PACKET_H
+#ifndef SERVER_H
+#define SERVER_H
 
 #include <stdio.h>
 #include <WinSock2.h>
