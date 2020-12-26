@@ -12,7 +12,7 @@ int main(void) {
 	MainThread = CreateThread(NULL, 0, mainThrFun, NULL, 0, &ThreadId);
 	if (MainThread == NULL || ThreadId == 0)
 	{
-		printf("CreatThread failed.\n");
+		printf(MainThrErr);
 	}
 
 	//Loop for the main thread
@@ -55,7 +55,7 @@ DWORD WINAPI mainThrFun(LPVOID lp) {
 	printf(CreateMain, GetCurrentThreadId());
 
 	printf(C_preface);
-
+	int index = 1;
 	while (1)
 	{
 		printf(C_InputTip);
@@ -73,16 +73,31 @@ DWORD WINAPI mainThrFun(LPVOID lp) {
 			disconnect();
 			break;
 		case TIME:
-			send_time_request();
+			//send_time_request();
+			memset(RequestBuf, 0, sizeof(RequestBuf));
+			RequestBuf[0] = TIME;
+			sendRequest(false);
 			break;
 		case NAME:
-			send_name_request();
+			memset(RequestBuf, 0, sizeof(RequestBuf));
+			RequestBuf[0] = NAME;
+			sendRequest(false);
 			break;
 		case LIST:
-			send_list_request();
+			memset(RequestBuf, 0, sizeof(RequestBuf));
+			RequestBuf[0] = LIST;
+			sendRequest(false);
 			break;
 		case SENDMSG:
-			send_message_request();
+			memset(RequestBuf, 0, sizeof(RequestBuf));
+			printf(InputIndex);//Input the client's index you want to send
+			scanf("%d", &index);
+			printf(InputMsg);//Input the client's message you want to send
+			scanf("%s", RequestBuf + 2);
+			strcat(RequestBuf + 2, "\0");
+			RequestBuf[0] = SENDMSG;
+			RequestBuf[1] = index;
+			sendRequest(true);
 			break;
 		default:
 			break;
@@ -96,7 +111,6 @@ DWORD WINAPI mainThrFun(LPVOID lp) {
 				ResetEvent(ReceiveEvent);
 				Sleep(1);
 			}
-
 		}
 
 	}
@@ -112,24 +126,24 @@ void _connect(void) {
 		printf("You have already connect to a server,please disconnect before connecting to a new server!\n");
 		return;
 	}
-	//Input the server's IP address and port
-	//printf("Please type in your target server's IP:\n");
-	//scanf("%s", ServerIP);
-	//printf("Please type in your target server's Port:");
-	//scanf("%d", &ServerPort);
-	////Select the valid port
-	//while (ServerPort <= 1024 && ServerPort <= 65535)
-	//{
-	//	printf("Invalid port number,please select a port range from 1025 to 65534!\n");
-	//	printf("Please type in your target server's Port:  ");
-	//	scanf("%d", &ServerPort);
-	//}
-
+	//Input the server's IP address
+	printf("Please type in your target server's IP:\n");
+	scanf("%s", ServerIP);
+	/*printf("Please type in your target server's Port:");
+	scanf("%d", &ServerPort);
+	//Select the valid port
+	while (ServerPort <= 1024 && ServerPort <= 65535)
+	{
+		printf("Invalid port number,please select a port range from 1025 to 65534!\n");
+		printf("Please type in your target server's Port:  ");
+		scanf("%d", &ServerPort);
+	}
+	*/
 	//Initialize the server
 	SOCKADDR_IN Server;
 	Server.sin_family = AF_INET;
 	Server.sin_port = htons(ServerPort);
-	Server.sin_addr.s_addr = inet_addr(DEFAULT_IP);
+	Server.sin_addr.s_addr = inet_addr(ServerIP);
 
 	//Get the socket
 	ClientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -139,7 +153,7 @@ void _connect(void) {
 		printf(CreateSockErr);
 		return;
 	}
-	printf("Socket: %lu, Port: %d, IP: %s\n", ClientSocket, ServerPort, DEFAULT_IP);
+	printf("Socket: %lu, Port: %d, IP: %s\n", ClientSocket, ServerPort, ServerIP);
 
 	//Create InputEvent's event
 	InputEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -153,7 +167,7 @@ void _connect(void) {
 		return;
 	}
 	//Set the status to be true
-	ConnectStatus = TRUE;
+	ConnectStatus = true;
 
 	//Create child thread
 	ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -163,7 +177,7 @@ void _connect(void) {
 }
 
 //Create child thread
-void create_child_thread(void) {
+void create_child_thread() {
 	HANDLE ChildThread = NULL;
 	DWORD  ThreadId = 0;
 
@@ -206,14 +220,33 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 
 //Exit the program
 void exit(void) {
-	//Connect from the server first
 	if (ConnectStatus)
 	{
 		disconnect();
 	}
 	exit(0);
 }
+void disconnect() {
+	memset(RequestBuf, 0, sizeof(RequestBuf));
+	RequestBuf[0] = DISCONN;
+	sendRequest(false);
+	ConnectStatus = false;
+}
 
+void sendRequest(bool isMsg) {
+	if (ConnectStatus == false)
+		printf(ConnFirstErr);
+	else {
+		if (isMsg == false) {
+			RequestBuf[1] = 1;
+			RequestBuf[2] = 0;
+		}
+		if (send(ClientSocket, RequestBuf, strlen(RequestBuf), 0) < 0) {
+			printf(SendErr);
+		}
+	}
+}
+/*
 //Disconnect from the server
 void disconnect(void) {
 	if (ConnectStatus == false)
@@ -232,13 +265,11 @@ void disconnect(void) {
 		int ret = send(ClientSocket, RequestBuf, strlen(RequestBuf), 0);
 		if (ret == SOCKET_ERROR)
 		{
-			printf("Disconnect from server  failed!\n");
-			printf("Please connect to server first!\n");
+			printf(ConnFirstErr);
 		}
 
 	}
 }
-
 //Send a request to get current time
 void send_time_request(void) {
 	//Check if the connection has established
@@ -312,7 +343,7 @@ void send_list_request(void) {
 
 		if (ret == SOCKET_ERROR)
 		{
-			printf("Send list request failed!\n");
+			printf();
 		}
 	}
 }
@@ -345,3 +376,4 @@ void send_message_request(void) {
 		}
 	}
 }
+*/

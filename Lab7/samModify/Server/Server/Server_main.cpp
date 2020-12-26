@@ -119,9 +119,9 @@ DWORD WINAPI childThrFun(LPVOID lp) {
 	sprintf(IndexTemp, "%d", ChildIndex);
 	strcat(ResponseBuffer + 2, "Hello! Client ");
 	strcat(ResponseBuffer + 2, IndexTemp);
-	strcat(ResponseBuffer + 2, "  You have connected to the server successfully!");
-	ret = send(CurrentSocket, ResponseBuffer, sizeof(ResponseBuffer), 0);
-	if (ret <= 0)
+	strcat(ResponseBuffer + 2, "\n----------------------------------------");
+	//strcat(ResponseBuffer + 2, "  You have connected to the server successfully!");
+	if (send(CurrentSocket, ResponseBuffer, sizeof(ResponseBuffer), 0) <= 0)
 	{
 		printf(RecvErr);
 	}

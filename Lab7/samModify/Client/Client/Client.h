@@ -23,7 +23,7 @@ char ReceiveBuf[512] = { 0 };
 //The buffer to be sented to the server
 char RequestBuf[512] = { 0 };
 //The IP address of server
-//char ServerIP[100] = { 0 };
+char ServerIP[100] = { 0 };
 
 //Initialize the socket
 void InitSocket(void);
@@ -40,13 +40,14 @@ void _connect();
 void exit();
 //Break connection between the client and the server
 void disconnect();
+void sendRequest(bool isMsg);
 //Send request to server for current time
-void send_time_request();
+/*void send_time_request();
 //Send request to server for server's name
 void send_name_request();
 //Send request to server for all clients' list
 void send_list_request();
 //Send message to another client
 void send_message_request();
-
+*/
 #endif
