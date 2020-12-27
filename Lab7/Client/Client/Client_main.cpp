@@ -137,16 +137,7 @@ void _connect(void) {
 	//Input the server's IP address
 	printf(InputIP);
 	scanf("%s", ServerIP);
-	/*printf("Please type in your target server's Port:");
-	scanf("%d", &ServerPort);
-	//Select the valid port
-	while (ServerPort <= 1024 && ServerPort <= 65535)
-	{
-		printf("Invalid port number,please select a port range from 1025 to 65534!\n");
-		printf("Please type in your target server's Port:  ");
-		scanf("%d", &ServerPort);
-	}
-	*/
+
 	//Initialize the server
 	SOCKADDR_IN Server;
 	Server.sin_family = AF_INET;
