@@ -18,18 +18,12 @@
     <ClInclude Include="Client.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Error.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="global.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Client.cpp">
+    <ClCompile Include="Client_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

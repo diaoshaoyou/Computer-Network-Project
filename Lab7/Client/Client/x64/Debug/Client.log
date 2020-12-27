@@ -1,5 +1,7 @@
-﻿  Client.cpp
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(174,19): warning C4244: “=”: 从“SOCKET”转换到“int”，可能丢失数据
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(214,5): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-D:\00a\network\Computer-Network-Project\Lab7\Client\Client\Client.cpp(222): warning C4715: “Send”: 不是所有的控件路径都返回值
-  Client.vcxproj -> D:\00a\network\Computer-Network-Project\Lab7\Client\x64\Debug\Client.exe
+﻿  Client_main.cpp
+D:\00a\network\Computer-Network-Project\Lab7\samModify\Client\Client\Client_main.cpp(156,9): warning C4477: “printf”: 格式字符串“%lu”需要类型“unsigned long”的参数，但可变参数 1 拥有了类型“SOCKET”
+D:\00a\network\Computer-Network-Project\Lab7\samModify\Client\Client\Client_main.cpp(156,9): message : 请考虑在格式字符串中使用“%llu”
+D:\00a\network\Computer-Network-Project\Lab7\samModify\Client\Client\Client_main.cpp(156,9): message : 请考虑在格式字符串中使用“%Iu”
+D:\00a\network\Computer-Network-Project\Lab7\samModify\Client\Client\Client_main.cpp(156,9): message : 请考虑在格式字符串中使用“%I64u”
+D:\00a\network\Computer-Network-Project\Lab7\samModify\Client\Client\Client_main.cpp(244,6): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  Client.vcxproj -> D:\00a\network\Computer-Network-Project\Lab7\samModify\Client\x64\Debug\Client.exe
