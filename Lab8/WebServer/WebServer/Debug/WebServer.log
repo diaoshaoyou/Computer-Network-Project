@@ -1,0 +1,4 @@
+﻿  WebServer.cpp
+D:\00a\network\Computer-Network-Project\Lab8\WebServer\WebServer\WebServer.cpp(79,30): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+D:\00a\network\Computer-Network-Project\Lab8\WebServer\WebServer\WebServer.cpp(141,65): warning C4018: “<=”: 有符号/无符号不匹配
+  WebServer.vcxproj -> D:\00a\network\Computer-Network-Project\Lab8\WebServer\Debug\WebServer.exe
